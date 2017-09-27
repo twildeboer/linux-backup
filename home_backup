@@ -1,0 +1,15 @@
+#!/bin/bash
+
+_HOME='/home/twildeboer'
+
+# The root directory to be backed up. This directory will be the top directory
+# of the backup.
+_SRC_ROOT="${_HOME}"
+
+# The full path to the backup root directory on the mounted drive.
+_DEST_ROOT='/media/twildeboer/fs-backup/autonomic-backup-home'
+
+_SCRIPT_DIR="$(cd "${0%/*}"; pwd)"
+
+zenity --question --text "Backup now?" && \
+  "${_SCRIPT_DIR}/incremental_backup" "${_HOME}" "${_SRC_ROOT}" "${_DEST_ROOT}"

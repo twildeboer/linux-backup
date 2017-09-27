@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Time-machine-style backup
+
+set -o nounset
+set -o errexit
+
+_HOME="$1"
+_SRC_ROOT="$2"
+_DEST_ROOT="$3"
+
+_SCRIPT_NAME="${0##*/}"
+_BACKUP_LOG="${_HOME}/${_SCRIPT_NAME}.log"
+
+_set_date() {
+  _DATE=`date "+%Y-%m-%dT%H:%M:%S"`
+}
+
+_run_backup() {
+  _set_date
+  echo "${_DATE} Started ${_SRC_ROOT} -> ${_DEST_ROOT}" >> "${_BACKUP_LOG}"
+
+  local latest_dir="${_DEST_ROOT}/latest"
+  local dest_dir="${_DEST_ROOT}/backup-${_DATE}"
+  rsync -ax --link-dest="${latest_dir}" "${_SRC_ROOT}" "${dest_dir}" \
+      &>> "${_BACKUP_LOG}"
+
+  # Replace the link to 
+  rm -f "${latest_dir}"
+  ln -s "${dest_dir}" "${latest_dir}"
+
+  _set_date
+  echo "${_DATE} Completed" >> "${_BACKUP_LOG}"
+}
+
+#-------------------------------------------------------------------------------
+
+_run_backup
+
