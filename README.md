@@ -25,20 +25,22 @@ others. When the backup is completed a symlink called `latest` will point to
 the backup directory just created.
 
 ## Running from cron
-### home_backup
 To run from cron, you can run the `home_backup` from a crontab-configured 
 cron task by executing
 ```
 sudo crontab -u <your-username> -e
 ```
 Then paste the contents of `crontab_contents` into the editor _and modifying the
-path to the _`home_backup`_script_.
+path to the_ `home_backup` _script_.
 
-### full_backup
-If you want to run this from a user crontab, then the prompt dialog is different
-(ugly) and will prompt you for your password, assuming you have sudo privileges.
+## full_backup
+The prompt dialog is different (ugly) and will prompt you for your password, 
+assuming you have sudo privileges.
+If you want to run this from a user crontab, do as described above and modify 
+the path.
+
 
 ## Thanks
-Much thanks to (Michael Jakl)[https://blog.interlinked.org/about/index.html]'s
-(Time Machine for every Unix out there)[https://blog.interlinked.org/tutorials/rsync_time_machine.html]
+Much thanks to [Michael Jakl](https://blog.interlinked.org/about/index.html)'s
+"[Time Machine for every Unix out there](https://blog.interlinked.org/tutorials/rsync_time_machine.html)"
 blog post, on which the `incremental_backup` script is based.
