@@ -1,10 +1,31 @@
 #!/bin/bash
 
-_HOME='/home/twildeboer'
-_SRC_ROOT='/'
-_DEST_ROOT='/media/twildeboer/fs-backup/autonomic-backup-full'
+_RC_FILE_NAME='linuxbackuprc'
+
+# Load RC file
+# Try not-hidden first
+if [ -e "${HOME}/${_RC_FILE_NAME}" ]; then
+  _RC_FILE="${HOME}/${_RC_FILE_NAME}"
+# Try hidden next
+elif [ -e "${HOME}/.${_RC_FILE_NAME}" ]; then
+  _RC_FILE="${HOME}/.${_RC_FILE_NAME}"
+else
+  _MSG="Cannot find linuxbackuprc (.linuxbackuprc) in $HOME directory."
+  zenity --error --text "$_MSG"
+  exit 1
+fi
+
+source "${_RC_FILE}"
 
 _SCRIPT_DIR="$(cd "${0%/*}"; pwd)"
+
+_SRC_ROOT="${_FULL_SRC_ROOT}"
+_DEST_ROOT="${_FULL_DEST_ROOT}"
+
+_RSYNC_OPTS=" "
+for _OPT in "${_FULL_RSYNC_OPTS[@]}" ; do
+  _RSYNC_OPTS+="$_OPT "
+done
 
 pkexec --user root \
   "${_SCRIPT_DIR}/incremental_backup" "${_HOME}" "${_SRC_ROOT}" "${_DEST_ROOT}"

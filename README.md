@@ -7,13 +7,17 @@ This backup system assumes you are backing up to a file system that supports
 hard links.
 
 ## Some Usage Notes
-You must modify the `home_backup` and `full_backup` scripts to fit your specific
-username, mountpoint, etc. Review the scripts to see what they do before trying
+You must modify the `linuxbackuprc` file to fit your specific circumstances and
+move it to your `$HOME` directory. You may rename it with a leading `.` (dot)
+to hide it if you like.
+
+Of course, you should review the scripts to see what they do before trying
 to run them.
 
-The script prompts you with a dialog, whether or not to actually do the backup,
-since it may not be a convenient time, depending on the performance of your 
-system while it is backing up.
+The `home_backup` script prompts you with a dialog, whether or not to actually
+do the backup, since it may not be a convenient time, depending on the
+performance of your system while it is backing up. It also checks whether your
+destination is actually mounted and gives you a chance to mount it.
 
 The script produces a log file in whatever directory you told it was `_HOME`.
 
@@ -33,12 +37,10 @@ sudo crontab -u <your-username> -e
 Then paste the contents of `crontab_contents` into the editor _and modifying the
 path to the_ `home_backup` _script_.
 
-## full_backup
-The prompt dialog is different (ugly) and will prompt you for your password, 
-assuming you have sudo privileges.
-If you want to run this from a user crontab, do as described above and modify 
-the path.
-
+### full_backup
+`full_backup` is not so well-tested. You may need to tweak it for your purposes.
+If you want to run this from a user crontab, then the prompt dialog is different
+(ugly) and will prompt you for your password, assuming you have sudo privileges.
 
 ## Thanks
 Much thanks to [Michael Jakl](https://blog.interlinked.org/about/index.html)'s
