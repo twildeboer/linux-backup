@@ -3,7 +3,6 @@
 # Time-machine-style backup
 
 set -o nounset
-set -o errexit
 
 _HOME="$1"
 _SRC_ROOT="$2"
@@ -19,27 +18,32 @@ _set_date() {
 
 _run_backup() {
   _set_date
-  echo "${_DATE} Started ${_SRC_ROOT} -> ${_DEST_ROOT}" >> "${_BACKUP_LOG}"
+  echo "${_DATE} Started ${_SRC_ROOT} -> ${_DEST_ROOT}" | tee -a "${_BACKUP_LOG}"
 
   local latest_dir="${_DEST_ROOT}/latest"
   local dest_dir="${_DEST_ROOT}/backup-${_DATE}"
-  mkdir -p "$latest_dir"
   mkdir -p "$dest_dir"
 
   local cmd
-  cmd="rsync -ax ${_RSYNC_OPTS} --link-dest=${latest_dir}"
+  if $_USE_SUDO ; then
+    cmd+='sudo '
+  fi
+  cmd+="rsync -ax ${_RSYNC_OPTS} --link-dest=${latest_dir}"
   cmd+=" ${_SRC_ROOT} ${dest_dir} &>> ${_BACKUP_LOG}"
 
   echo "cmd=$cmd" >> ${_BACKUP_LOG}
 
-  eval $cmd
+  eval "$cmd"
+  local err=$?
 
   # Replace the link to 
   rm -f "${latest_dir}"
   ln -s "${dest_dir}" "${latest_dir}"
 
   _set_date
-  echo "${_DATE} Completed" >> "${_BACKUP_LOG}"
+  echo "${_DATE} Completed" | tee -a "${_BACKUP_LOG}"
+
+  return $err
 }
 
 #-------------------------------------------------------------------------------

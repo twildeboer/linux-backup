@@ -4,8 +4,9 @@ SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # To experiment, this runs every mintue:
-#* * * * *   env DISPLAY=:0.0 /home/twildeboer/bin/home_backup
+#* * * * *   kill -5 $(< /tmp/cron_backup_starter_PID)
 
 # This runs at 12:00 and 18:00
 # See output of `man 5 crontab` for more details.
-0 12,18 * * *   env DISPLAY=:0.0 /home/twildeboer/bin/home_backup
+# Start backup by sending a signal to the starter process:
+0 12,18 * * *   kill -5 $(< /tmp/cron_backup_starter_PID)

@@ -1,50 +1,105 @@
 #!/bin/bash
 
+set -o errexit
+set -o nounset
 
+_RC_FILE=''
 
-_RC_FILE_NAME='linuxbackuprc'
-
-# Load RC file
-# Try not-hidden first
-if [ -e "${HOME}/${_RC_FILE_NAME}" ]; then
-  _RC_FILE="${HOME}/${_RC_FILE_NAME}"
-# Try hidden next
-elif [ -e "${HOME}/.${_RC_FILE_NAME}" ]; then
-  _RC_FILE="${HOME}/.${_RC_FILE_NAME}"
-else
-  _MSG="Cannot find linuxbackuprc (.linuxbackuprc) in $HOME directory."
-  zenity --error --text "$_MSG"
-  exit 1
-fi
-
-source "${_RC_FILE}"
+# Whether or not to use sudo to execute rsync
+# Be careful if you set this to true and run from a cron task.
+# This can be overridden in the rc file.
+export _USE_SUDO=false
 
 _SCRIPT_DIR="$(cd "${0%/*}"; pwd)"
 
-_SRC_ROOT="${_HOME_SRC_ROOT}"
-_DEST_ROOT="${_HOME_DEST_ROOT}"
+#-------------------------------------------------------------------------------
 
-_RSYNC_OPTS=" "
-for _OPT in "${_HOME_RSYNC_OPTS[@]}" ; do
-  # Make sure the exclusion patterns are quoted.
-  _RSYNC_OPTS+=" $(sed -e "s/\(--exclude=\)\(.*\)$/\1\"\2\"/" <<< $_OPT)"
-done
-
-while true; do
-  if zenity --question --text "Backup now?" 2>/dev/null; then
-    if [ -d "${_DEST_ROOT}" ]; then
-
-      "${_SCRIPT_DIR}/incremental_backup" "${_HOME}" \
-          "${_SRC_ROOT}" "${_DEST_ROOT}" "${_RSYNC_OPTS}" || \
-          zenity --warning --text "There was an error during backup."
-      break
+_prompt_yes_no() {
+  local reply
+  while true; do
+    read -p "$1 [yes|no] " reply
+    if [[ $reply == 'yes' ]]; then
+      return 0
     else
-      if ! zenity --question --text "Is drive mounted?" ; then
-        zenity --warning --text "Aborting"
-        break
+      if [[ $reply == 'no' ]]; then
+        return 1
+      else
+        echo "Must be 'yes' or 'no'."
       fi
     fi
-  else
-    break
+  done
+}
+
+_warn() {
+  read -p "WARNING: $1 (Enter to dismiss) "
+}
+
+_error() {
+  read -p "ERROR: $1 (Enter to dismiss) "
+}
+
+_setup() {
+  # rc file can be passed as arument.
+  if [ $# -eq 1 ]; then
+    _RC_FILE="$1"
   fi
-done
+
+  _RC_FILE_NAME='linuxbackuprc'
+
+  # Load RC file
+  # Try not-hidden first
+  if [ -z "$_RC_FILE" ] || ! [ -f $_RC_FILE ]; then
+    if [ -e "${HOME}/${_RC_FILE_NAME}" ]; then
+      _RC_FILE="${HOME}/${_RC_FILE_NAME}"
+    # Try hidden next
+    elif [ -e "${HOME}/.${_RC_FILE_NAME}" ]; then
+      _RC_FILE="${HOME}/.${_RC_FILE_NAME}"
+    else
+      _MSG="Cannot find linuxbackuprc (.linuxbackuprc) in $HOME directory."
+      _error "$_MSG"
+      exit 1
+    fi
+  fi
+
+  source "${_RC_FILE}"
+
+  _SRC_ROOT="${_HOME_SRC_ROOT}"
+  _DEST_ROOT="${_HOME_DEST_ROOT}"
+}
+
+
+_run() {
+  _RSYNC_OPTS=" "
+
+  for _OPT in "${_HOME_RSYNC_OPTS[@]}" ; do
+    # Make sure the exclusion patterns are quoted.
+    _RSYNC_OPTS+=" $(sed -e "s/\(--exclude=\)\(.*\)$/\1\"\2\"/" <<< $_OPT)"
+  done
+
+  while true; do
+    if _prompt_yes_no "Backup now?" ; then
+      if [ -d "${_DEST_ROOT}" ]; then
+
+        "${_SCRIPT_DIR}/incremental_backup" "${_HOME}" \
+            "${_SRC_ROOT}" "${_DEST_ROOT}" "${_RSYNC_OPTS}" || \
+            _warn "There was an error during backup."
+        break
+      else
+        if ! _prompt_yes_no "Is the drive mounted?" ; then
+          _warn "Aborting."
+          break
+        fi
+      fi
+    else
+      exit 0
+    fi
+  done
+
+  echo ""
+  read -p "(Enter to dismiss) " 
+}
+
+# ------------------------------------------------------------------------------
+
+_setup $@
+_run
