@@ -1,18 +1,19 @@
 # This config file is sourced by the linux-backup scripts.
 # Configure it for your own cirucmstances.
 
-_HOME="$HOME"
+# Don't use $HOME since this may be launched by root.
+_HOME='/home/twildeboer'
+
+# Whether or not to use sudo to execute rsync
+# Be careful if you set this to true and run from a cron task.
+_USE_SUDO=true
 
 # The root directory to be backed up. This directory will be the top directory
 # of the backup.
 _HOME_SRC_ROOT="${_HOME}"
-_FULL_SRC_ROOT="/"
 
 # The full path to the backup root directory on the mounted drive.
-# For home_backup:
-_HOME_DEST_ROOT='/media/your/mount/path-to/backup-home'
-# For full_backup:
-_FULL_DEST_ROOT='/media/your/mount/path-to/backup-full'
+_HOME_DEST_ROOT='/media/twildeboer/fs-backup/autonomic-backup-home'
 
 # rsync params (passed to rsync) see rsync documentation for details
 # BE CAREFUL WITH PATHS INCLUDING SPACES (NOT WELL SUPPORTED)
@@ -21,14 +22,11 @@ declare -a _HOME_RSYNC_OPTS=(
   --exclude="${_HOME}/.cache"
   --exclude="${_HOME}/.mozilla"
   --exclude="${_HOME}/.thunderbird"
-)
-
-# For full_backup
-declare -a _FULL_RSYNC_OPTS=(
-  --exclude="${_HOME}/.cache"
-  --exclude="${_HOME}/.mozilla"
-  --exclude="${_HOME}/.thunderbird"
-  --exclude="/proc"
-  --exclude="/run"
-  --exclude="/sys"
+  --exclude="*/build/*"
+  --exclude="*.pyc"
+  --exclude="*.o"
+  --exclude="*.a"
+  --exclude="*.class"
+  --exclude="*.swp"
+  --exclude="tags"
 )

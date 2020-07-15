@@ -1,0 +1,15 @@
+#!/bin/bash
+
+_BASENAME="${0##*/}"
+_PIDFILE="/tmp/${_BASENAME}_PID"
+
+# Wait until we get a SIGTRAP signal, then launch the backup in a new terminal.
+{
+  while true; do
+      trap "gnome-terminal -- $HOME/bin/home_backup" SIGTRAP
+      tail /dev/null
+  done
+} &
+
+echo "$!" > "$_PIDFILE"
+
