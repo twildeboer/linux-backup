@@ -26,11 +26,12 @@ _DEST_ROOT="${_HOME_DEST_ROOT}"
 
 _RSYNC_OPTS=" "
 for _OPT in "${_HOME_RSYNC_OPTS[@]}" ; do
-  _RSYNC_OPTS+="$_OPT "
+  # Make sure the exclusion patterns are quoted.
+  _RSYNC_OPTS+=" $(sed -e "s/\(--exclude=\)\(.*\)$/\1\"\2\"/" <<< $_OPT)"
 done
 
 while true; do
-  if zenity --question --text "Backup now?"; then
+  if zenity --question --text "Backup now?" 2>/dev/null; then
     if [ -d "${_DEST_ROOT}" ]; then
 
       "${_SCRIPT_DIR}/incremental_backup" "${_HOME}" \

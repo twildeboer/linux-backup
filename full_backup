@@ -24,7 +24,8 @@ _DEST_ROOT="${_FULL_DEST_ROOT}"
 
 _RSYNC_OPTS=" "
 for _OPT in "${_FULL_RSYNC_OPTS[@]}" ; do
-  _RSYNC_OPTS+="$_OPT "
+  # Make sure the exclusion patterns are quoted.
+  _RSYNC_OPTS+="$(sed -e "s/\(--exclude=\)\(.*\)$/\1\"\2\"/" <<< $_OPT) "
 done
 
 pkexec --user root \
