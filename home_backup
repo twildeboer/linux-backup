@@ -1,15 +1,50 @@
 #!/bin/bash
 
-_HOME='/home/twildeboer'
 
-# The root directory to be backed up. This directory will be the top directory
-# of the backup.
-_SRC_ROOT="${_HOME}"
 
-# The full path to the backup root directory on the mounted drive.
-_DEST_ROOT='/media/twildeboer/fs-backup/autonomic-backup-home'
+_RC_FILE_NAME='linuxbackuprc'
+
+# Load RC file
+# Try not-hidden first
+if [ -e "${HOME}/${_RC_FILE_NAME}" ]; then
+  _RC_FILE="${HOME}/${_RC_FILE_NAME}"
+# Try hidden next
+elif [ -e "${HOME}/.${_RC_FILE_NAME}" ]; then
+  _RC_FILE="${HOME}/.${_RC_FILE_NAME}"
+else
+  _MSG="Cannot find linuxbackuprc (.linuxbackuprc) in $HOME directory."
+  zenity --error --text "$_MSG"
+  exit 1
+fi
+
+source "${_RC_FILE}"
 
 _SCRIPT_DIR="$(cd "${0%/*}"; pwd)"
 
-zenity --question --text "Backup now?" && \
-  "${_SCRIPT_DIR}/incremental_backup" "${_HOME}" "${_SRC_ROOT}" "${_DEST_ROOT}"
+_SRC_ROOT="${_HOME_SRC_ROOT}"
+_DEST_ROOT="${_HOME_DEST_ROOT}"
+
+_RSYNC_OPTS=" "
+for _OPT in "${_HOME_RSYNC_OPTS[@]}" ; do
+  # Make sure the exclusion patterns are quoted.
+  _RSYNC_OPTS+=" $(sed -e "s/\(--exclude=\)\(.*\)$/\1\"\2\"/" <<< $_OPT)"
+done
+
+while true; do
+  if zenity --question --text "Backup now?" 2>/dev/null; then
+    if [ -d "${_DEST_ROOT}" ]; then
+
+      "${_SCRIPT_DIR}/incremental_backup" "${_HOME}" \
+          "${_SRC_ROOT}" "${_DEST_ROOT}" "${_RSYNC_OPTS}" || \
+          zenity --warning --text "There was an error during backup."
+      break
+    else
+      if ! zenity --question --text "Is drive mounted?" ; then
+        zenity --warning --text "Aborting"
+        break
+      fi
+    fi
+  else
+    break
+  fi
+done
