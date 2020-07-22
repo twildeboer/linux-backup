@@ -18,7 +18,6 @@ _set_date() {
 
 _run_backup() {
   _set_date
-  echo "${_DATE} Started ${_SRC_ROOT} -> ${_DEST_ROOT}" | tee -a "${_BACKUP_LOG}"
 
   local latest_dir="${_DEST_ROOT}/latest"
   local dest_dir="${_DEST_ROOT}/backup-${_DATE}"
@@ -33,14 +32,25 @@ _run_backup() {
 
   echo "cmd=$cmd" >> ${_BACKUP_LOG}
 
+  echo "${_DATE} Started ${_SRC_ROOT} -> ${_DEST_ROOT}" | tee -a "${_BACKUP_LOG}"
+  
+  local start_sec=$(date +%s)
+
   eval "$cmd"
   local err=$?
+
+  local end_sec=$(date +%s)
 
   # Replace the link to 
   rm -f "${latest_dir}"
   ln -s "${dest_dir}" "${latest_dir}"
 
+  local duration_sec=$((end_sec - start_sec))
+  local duration_min=$((duration_sec / 60))
+  local modulo_sec=$(( duration_sec - (duration_min * 60)))
+
   _set_date
+  echo "${_DATE} Backup took $duration_min min, $modulo_sec sec." | tee -a "${_BACKUP_LOG}"
   echo "${_DATE} Completed" | tee -a "${_BACKUP_LOG}"
 
   return $err

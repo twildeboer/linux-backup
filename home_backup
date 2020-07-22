@@ -78,8 +78,13 @@ _run() {
 
   while true; do
     if _prompt_yes_no "Backup now?" ; then
-      if [ -d "${_DEST_ROOT}" ]; then
 
+      # Prompt for sudo early
+      if $_USE_SUDO; then
+        sudo cat /dev/null
+      fi
+
+      if [ -d "${_DEST_ROOT}" ]; then
         "${_SCRIPT_DIR}/incremental_backup" "${_HOME}" \
             "${_SRC_ROOT}" "${_DEST_ROOT}" "${_RSYNC_OPTS}" || \
             _warn "There was an error during backup."
@@ -96,7 +101,7 @@ _run() {
   done
 
   echo ""
-  read -p "(Enter to dismiss) " 
+  read -p "(Enter to dismiss) "
 }
 
 # ------------------------------------------------------------------------------
