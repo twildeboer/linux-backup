@@ -2,14 +2,21 @@
 
 _BASENAME="${0##*/}"
 _PIDFILE="/tmp/${_BASENAME}_PID"
+_TAIL_PID=
+
+# See http://veithen.io/2014/11/16/sigterm-propagation.html
 
 # Wait until we get a SIGTRAP signal, then launch the backup in a new terminal.
 {
   while true; do
-      trap "gnome-terminal --hide-menubar -- $HOME/bin/home_backup" SIGTRAP
-      tail /dev/null
+      trap 'kill -TERM $_TAIL_PID ; gnome-terminal --hide-menubar -- $HOME/bin/home_backup' SIGTRAP
+      trap 'kill -TERM $_TAIL_PID ; exit' TERM INT
+      tail -f /dev/null & # do nothing forever in the background
+      _TAIL_PID=$!
+      wait $_TAIL_PID # stops as soon as trap receives signal
+      wait $_TAIL_PID # Wait for tail to actually stop
   done
 } &
-
 echo "$!" > "$_PIDFILE"
+
 
